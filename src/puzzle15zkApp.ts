@@ -12,11 +12,12 @@ import {
     Circuit,
     prop,
     Poseidon,
+    arrayProp,
 } from "snarkyjs";
 
-export {Location};
+const DEFAULT_MAX_LENGTH = 300;
 
-class Location extends CircuitValue {
+export class Location extends CircuitValue {
     @prop row: Field;
     @prop col: Field;
 
@@ -25,7 +26,19 @@ class Location extends CircuitValue {
     }
 }
 
-class DictAccess extends CircuitValue {
+export class Locations extends CircuitValue {
+    @prop length = DEFAULT_MAX_LENGTH;
+    @arrayProp(Location, DEFAULT_MAX_LENGTH) values: Location[];
+
+    private constructor(values: Location[]) {
+        super(values);
+    }
+    
+}
+
+
+
+export class DictAccess extends CircuitValue {
     @prop key: Field;
     @prop prev_value: Field;
     @prop new_value: Field;
@@ -35,7 +48,7 @@ class DictAccess extends CircuitValue {
     }
 }
 
-class InitialState extends CircuitValue {
+/*class InitialState extends CircuitValue {
     @matrixProp(Field, 4, 4) value: Field[][];
   
     constructor(value: number[][]) {
@@ -46,7 +59,7 @@ class InitialState extends CircuitValue {
     hash() {
       return Poseidon.hash(this.value.flat());
     }
-  }
+  }*/
 
 export class puzzle15zkApp extends SmartContract{
     @state(Field) puzzle15Hash = State<Field>();
@@ -70,7 +83,7 @@ export class puzzle15zkApp extends SmartContract{
         });
       }
 
-    @method verify_valid_location(loc: Location){
+    /*@method verify_valid_location(loc: Location){
         let row = loc.row;
             (row.mul(row.sub(1)).mul(row.sub(2)).mul(row.sub(3))).assertEquals(0);
 
@@ -89,9 +102,9 @@ export class puzzle15zkApp extends SmartContract{
         //eğer doğruysa a yoksa b'yi çalıştır.
 
 
-    }
+    }/*
 
-    @method verify_location_list(loc_list : Location[]){
+    /*@method verify_location_list(loc_list : Location[]){
         for(let i = 0; i < loc_list.length; i++) {
             this.verify_valid_location(loc_list[i]);
         }
@@ -99,10 +112,11 @@ export class puzzle15zkApp extends SmartContract{
         for(let j = 0; j < (loc_list.length - 1); j++){
             this.verify_adjacent_locations(loc_list[j], loc_list[j+1]);
         }
-    }
+    }*/
 
-    /*@method verify_location_list(loc_list : Location[]){
-        for(let i = 0; i < loc_list.length; i++) {
+    @method verify_location_list(loc_list : Locations){
+
+        for(let i = 0; i < loc_list.length ; i++) {
             verify_valid_location(loc_list[i]);
         }
 
@@ -112,10 +126,10 @@ export class puzzle15zkApp extends SmartContract{
 
         function verify_valid_location(loc: Location){
             let row = loc.row;
-                (row.mul(row.sub(1)).mul(row.sub(2)).mul(row.sub(3))).assertEquals(0);
+            (row.mul(row.sub(1)).mul(row.sub(2)).mul(row.sub(3))).assertEquals(0);
     
-                let col = loc.col;
-                (col.mul(col.sub(1)).mul(col.sub(2)).mul(col.sub(3))).assertEquals(0);
+            let col = loc.col;
+            (col.mul(col.sub(1)).mul(col.sub(2)).mul(col.sub(3))).assertEquals(0);
         }
 
         function verify_adjacent_locations(loc0: Location, loc1: Location){
@@ -128,9 +142,11 @@ export class puzzle15zkApp extends SmartContract{
             //Circuit.if()
             //eğer doğruysa a yoksa b'yi çalıştır.
         }
-    }*/
+    }
 
-    @method checkSolution(puzzle15Solution : InitialState, loc_list : Location[], tile_list : Field[]){
+    
+
+    /*@method checkSolution(puzzle15Solution : InitialState, loc_list : Location[], tile_list : Field[]){
         // Check whether initialStateSolution is same as the puzzle15Instance
         let puzzle15Hash = this.puzzle15Hash.get();
         this.puzzle15Hash.assertEquals(puzzle15Hash);
@@ -145,7 +161,7 @@ export class puzzle15zkApp extends SmartContract{
 
         this.isSolved.set(Bool(true));
         
-    }
+    }*/
 
     
 
@@ -169,7 +185,6 @@ export class puzzle15zkApp extends SmartContract{
             let my_bool = row_diff.equals(0);
 
             const x = Circuit.if(my_bool, (col_diff.mul(col_diff)).assertEquals(1), (row_diff.mul(row_diff).assertEquals(1)));
-
             
         }*/
     }

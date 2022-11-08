@@ -40,7 +40,7 @@ import {
 
   // ----------------------------------------------------
   // Create a new location
-  let loc = new Location(Field(0), Field(3));
+  /*let loc = new Location(Field(0), Field(3));
 
   const txn1 = await Mina.transaction(deployerAccount, () => {
     zkAppInstance.verify_valid_location(loc);
@@ -53,10 +53,12 @@ import {
 
   // ----------------------------------------------------
   // Create a location list
-  /*let loc_list : Location[] = [];
+  //let loc_list : Location[] = [];
+  /*var loc_list : Location[] = [];
   loc_list.push(new Location(Field(0), Field(2)));
   loc_list.push(new Location(Field(1), Field(2)));
-  loc_list.push(new Location(Field(3), Field(2)));*/
+  loc_list.push(new Location(Field(3), Field(2)));
+  
   
   
   const txn2 = await Mina.transaction(deployerAccount, () => {
@@ -66,7 +68,7 @@ import {
   await txn2.send().wait();
 
   const num2 = zkAppInstance.isSolved.get();
-  console.log('state after txn1:', num2.toString());
+  console.log('state after txn1:', num2.toString());*/
   /*try {
     const txn2 = await Mina.transaction(deployerAccount, () => {
       zkAppInstance.update(Field.fromNumber(75));
