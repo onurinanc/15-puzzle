@@ -1,100 +1,112 @@
-import { puzzle15zkApp, Location } from './puzzle15zkApp.js';
-import {
-  isReady,
-  shutdown,
-  Field,
-  Mina,
-  PrivateKey,
-  PublicKey,
-  AccountUpdate,
-} from 'snarkyjs';
+import { FifteenGame, Moves, Board } from './15Game.js';
+import { AccountUpdate, isReady, Mina, PrivateKey, shutdown } from 'snarkyjs';
 
-(async function main() {
+async function main() {
   await isReady;
 
-  console.log('SnarkyJS loaded');
+  console.log('SnarkyJS Loaded');
 
   const Local = Mina.LocalBlockchain();
   Mina.setActiveInstance(Local);
+
   const deployerAccount = Local.testAccounts[0].privateKey;
 
-  // ----------------------------------------------------
-
-  // create a destination we will deploy the smart contract to
+  // Create a public/private key pair. The public key is our address and where we will deploy to
   const zkAppPrivateKey = PrivateKey.random();
   const zkAppAddress = zkAppPrivateKey.toPublicKey();
 
-  // create an instance of Square - and deploy it to zkAppAddress
-  const zkAppInstance = new puzzle15zkApp(zkAppAddress);
-  const deploy_txn = await Mina.transaction(deployerAccount, () => {
+  const startBoard = new Board([
+    [1, 2, 3, 4],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 0, 15],
+  ]);
+
+  const moves = new Moves([{ prev: { x: 3, y: 3 }, now: { x: 3, y: 2 } }]);
+
+  const falseStartBoard = new Board([
+    [1, 2, 4, 3],
+    [5, 6, 7, 8],
+    [9, 10, 11, 12],
+    [13, 14, 15, 0],
+  ]);
+
+  const falseMoves1 = new Moves([
+    { prev: { x: 3, y: 3 }, now: { x: 3, y: 3 } },
+  ]);
+  const falseMoves2 = new Moves([
+    { prev: { x: 2, y: 2 }, now: { x: 2, y: 3 } },
+  ]);
+
+  // Create an instance of our Square smart contract and deploy it to zkAppAddress
+  const contract = new FifteenGame(zkAppAddress);
+  const deployTxn = await Mina.transaction(deployerAccount, () => {
     AccountUpdate.fundNewAccount(deployerAccount);
-    zkAppInstance.deploy({ zkappKey: zkAppPrivateKey });
-    zkAppInstance.init(Field(5));
-    zkAppInstance.sign(zkAppPrivateKey);
+    contract.deploy({ zkappKey: zkAppPrivateKey });
+    contract.init(startBoard);
+    contract.sign(zkAppPrivateKey);
   });
-  await deploy_txn.send().wait();
+  await deployTxn.send().wait();
 
-  // get the initial state of Square after deployment
-  const num0 = zkAppInstance.puzzle15Hash.get();
-  console.log('state after init:', num0.toString());
+  // Get the initial state of our zkApp account after deployment
+  const challenge = contract.challenge.get();
+  console.log('Challenge after init:', challenge.toString());
 
-  // ----------------------------------------------------
-  // Create a new location
-  /*let loc = new Location(Field(0), Field(3));
-
-  const txn1 = await Mina.transaction(deployerAccount, () => {
-    zkAppInstance.verify_valid_location(loc);
-    zkAppInstance.sign(zkAppPrivateKey);
-  });
-  await txn1.send().wait();
-
-  const num1 = zkAppInstance.isSolved.get();
-  console.log('state after txn1:', num1.toString());
-
-  // ----------------------------------------------------
-  // Create a location list
-  //let loc_list : Location[] = [];
-  /*var loc_list : Location[] = [];
-  loc_list.push(new Location(Field(0), Field(2)));
-  loc_list.push(new Location(Field(1), Field(2)));
-  loc_list.push(new Location(Field(3), Field(2)));
-  
-  
-  
-  const txn2 = await Mina.transaction(deployerAccount, () => {
-    zkAppInstance.verify_location_list(loc_list);
-    zkAppInstance.sign(zkAppPrivateKey);
-  });
-  await txn2.send().wait();
-
-  const num2 = zkAppInstance.isSolved.get();
-  console.log('state after txn1:', num2.toString());*/
-  /*try {
-    const txn2 = await Mina.transaction(deployerAccount, () => {
-      zkAppInstance.update(Field.fromNumber(75));
-      zkAppInstance.sign(zkAppPrivateKey);
+  // False board
+  try {
+    const solveTx = await Mina.transaction(deployerAccount, () => {
+      contract.solve(falseStartBoard, moves);
+      contract.sign(zkAppPrivateKey);
     });
-    await txn2.send().wait();
-  } catch (ex: any) {
-    console.log(ex.message);
+    await solveTx.send().wait();
+  } catch (e: any) {
+    console.log(e.message);
   }
-  const num2 = zkAppInstance.num.get();
-  console.log('state after txn2:', num2.toString());
 
-  // ----------------------------------------------------
+  // False solution 1
+  try {
+    const solveTx = await Mina.transaction(deployerAccount, () => {
+      contract.solve(startBoard, falseMoves1);
+      contract.sign(zkAppPrivateKey);
+    });
+    await solveTx.send().wait();
+  } catch (e: any) {
+    console.log(e.message);
+  }
 
-  const txn3 = await Mina.transaction(deployerAccount, () => {
-    zkAppInstance.update(Field.fromNumber(81));
-    zkAppInstance.sign(zkAppPrivateKey);
+  // False solution 2
+  try {
+    const solveTx = await Mina.transaction(deployerAccount, () => {
+      contract.solve(startBoard, falseMoves2);
+      contract.sign(zkAppPrivateKey);
+    });
+    await solveTx.send().wait();
+  } catch (e: any) {
+    console.log(e.message);
+  }
+
+  console.log("isSolved", contract.isSolved.get().toBoolean());
+
+  console.log("Calling with right solution");
+
+  // True solution
+  const solveTx = await Mina.transaction(deployerAccount, () => {
+    contract.solve(
+      new Board([
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+        [9, 10, 11, 12],
+        [13, 14, 0, 15],
+      ]),
+      moves
+    );
+    contract.sign(zkAppPrivateKey);
   });
-  await txn3.send().wait();
+  await solveTx.send().wait();
 
-  const num3 = zkAppInstance.num.get();
-  console.log('state after txn3:', num3.toString());
+  console.log("isSolved", contract.isSolved.get().toBoolean());
 
-  // ----------------------------------------------------
-*/
   console.log('Shutting down');
+}
 
-  await shutdown();
-})();
+main();

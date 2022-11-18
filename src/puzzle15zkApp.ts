@@ -15,6 +15,52 @@ import {
     arrayProp,
 } from "snarkyjs";
 
+class ClaimList1 extends ClaimListFactory(3) {}
+
+export type Claim = {
+    i: number;
+    j: number;
+  } | null;
+  
+  type ClaimListType = Claim[];
+  
+  /*
+    A ClaimList is a wrapper for a circuit array of claims.
+    A claim is an (i, j) representing the coordinate of a cell in a CanvasData.
+  */
+  export class BaseClaimList extends CircuitValue {
+    static size: Number;
+    claims: Field[][];
+  
+    constructor(claims: ClaimListType) {
+      super();
+      this.claims = claims.map((claim) => {
+        if (claim) {
+          return [Field(claim.i), Field(claim.j)];
+        } else {
+          return [Field(0), Field(0)]; // crude dummy value which actually interferes with the canvas #TODO
+        }
+      });
+    }
+  }
+  
+  export function ClaimListFactory(size: number): typeof BaseClaimList {
+    class ClaimList_ extends BaseClaimList {
+      static size = size;
+  
+      constructor(claims: ClaimListType) {
+        super(claims);
+        if (claims.length !== ClaimList_.size) {
+          throw Error(
+            `ClaimsList of size ${ClaimList_.size} cannot be initialized with claims of length ${claims.length}`
+          );
+        }
+      }
+    }
+    matrixProp(Field, size, 2)(ClaimList_.prototype, 'claims');
+    return ClaimList_;
+  }
+
 const DEFAULT_MAX_LENGTH = 300;
 
 export class Location extends CircuitValue {
@@ -114,7 +160,7 @@ export class puzzle15zkApp extends SmartContract{
         }
     }*/
 
-    @method verify_location_list(loc_list : Locations){
+    /*@method verify_location_list(loc_list : Locations){
 
         for(let i = 0; i < loc_list.length ; i++) {
             verify_valid_location(loc_list[i]);
@@ -122,6 +168,36 @@ export class puzzle15zkApp extends SmartContract{
 
         for(let j = 0; j < (loc_list.length - 1); j++){
             verify_adjacent_locations(loc_list[j], loc_list[j+1]);
+        }
+
+        function verify_valid_location(loc: Location){
+            let row = loc.row;
+            (row.mul(row.sub(1)).mul(row.sub(2)).mul(row.sub(3))).assertEquals(0);
+    
+            let col = loc.col;
+            (col.mul(col.sub(1)).mul(col.sub(2)).mul(col.sub(3))).assertEquals(0);
+        }
+
+        function verify_adjacent_locations(loc0: Location, loc1: Location){
+            let row_diff = loc0.row.sub(loc1.row);
+            let col_diff = loc0.col.sub(loc1.col);
+    
+            let col_check = col_diff.mul(col_diff); 
+            let row_check = row_diff.mul(row_diff);
+            
+            //Circuit.if()
+            //eğer doğruysa a yoksa b'yi çalıştır.
+        }
+    }*/
+
+    @method verify_claim_list(claim_list : ClaimList1){
+
+        for(let i = 0; i < claim_list.length ; i++) {
+            verify_valid_location(claim_list[i]);
+        }
+
+        for(let j = 0; j < (claim_list.length - 1); j++){
+            verify_adjacent_locations(claim_list[j], claim_list[j+1]);
         }
 
         function verify_valid_location(loc: Location){

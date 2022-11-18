@@ -1,3 +1,3 @@
-import { puzzle15zkApp } from './puzzle15zkApp.js';
+import { game15 } from './game15.js';
 
-export { puzzle15zkApp };
+export { game15 };
