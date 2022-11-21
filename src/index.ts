@@ -1,3 +1,3 @@
-import { game15 } from './game15.js';
+import { FifteenGame } from './game15.js';
 
-export { game15 };
+export { FifteenGame };

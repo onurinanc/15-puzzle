@@ -1,4 +1,4 @@
-import { FifteenGame, Moves, Board } from './15Game.js';
+import { FifteenGame, Moves, Board } from './game15.js';
 import { AccountUpdate, isReady, Mina, PrivateKey, shutdown } from 'snarkyjs';
 
 async function main() {
@@ -46,7 +46,7 @@ async function main() {
     contract.init(startBoard);
     contract.sign(zkAppPrivateKey);
   });
-  await deployTxn.send().wait();
+  await deployTxn.send();
 
   // Get the initial state of our zkApp account after deployment
   const challenge = contract.challenge.get();
@@ -58,7 +58,7 @@ async function main() {
       contract.solve(falseStartBoard, moves);
       contract.sign(zkAppPrivateKey);
     });
-    await solveTx.send().wait();
+    await solveTx.send();
   } catch (e: any) {
     console.log(e.message);
   }
@@ -69,7 +69,7 @@ async function main() {
       contract.solve(startBoard, falseMoves1);
       contract.sign(zkAppPrivateKey);
     });
-    await solveTx.send().wait();
+    await solveTx.send();
   } catch (e: any) {
     console.log(e.message);
   }
@@ -80,7 +80,7 @@ async function main() {
       contract.solve(startBoard, falseMoves2);
       contract.sign(zkAppPrivateKey);
     });
-    await solveTx.send().wait();
+    await solveTx.send();
   } catch (e: any) {
     console.log(e.message);
   }
@@ -102,7 +102,7 @@ async function main() {
     );
     contract.sign(zkAppPrivateKey);
   });
-  await solveTx.send().wait();
+  await solveTx.send();
 
   console.log("isSolved", contract.isSolved.get().toBoolean());
 
